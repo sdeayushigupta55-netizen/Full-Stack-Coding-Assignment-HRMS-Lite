@@ -13,6 +13,17 @@ export const deleteEmployee = (id) => api.delete(`/employees/${id}`);
 export const markAttendance = (data) => api.post("/attendance", data);
 export const getAttendance = (employeeId) => api.get(`/attendance/${employeeId}`);
 
+// Filter attendance records by date for an employee
+export const filterAttendanceByDate = (employeeId, startDate, endDate) => {
+  const params = {};
+  if (startDate) params.startDate = startDate;
+  if (endDate) params.endDate = endDate;
+  return api.get(`/attendance/${employeeId}/filter`, { params });
+};
+
+// Get total present days per employee
+export const getPresentDaysSummary = () => api.get('/attendance/summary/present-days');
+
 export default api;
 
 

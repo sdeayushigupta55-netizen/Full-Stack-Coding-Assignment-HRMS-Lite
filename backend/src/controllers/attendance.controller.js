@@ -1,3 +1,38 @@
+// Get total present days per employee
+exports.getPresentDaysSummary = async (req, res, next) => {
+  try {
+    // Aggregate present days for each employee
+    const summary = await Attendance.aggregate([
+      { $match: { status: 'Present' } },
+      { $group: {
+          _id: '$employee',
+          presentDays: { $sum: 1 }
+        }
+      },
+      {
+        $lookup: {
+          from: 'employees',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'employeeInfo'
+        }
+      },
+      {
+        $unwind: '$employeeInfo'
+      },
+      {
+        $project: {
+          employeeId: '$employeeInfo.employeeId',
+          name: '$employeeInfo.name',
+          presentDays: 1
+        }
+      }
+    ]);
+    res.json(summary);
+  } catch (err) {
+    next(err);
+  }
+};
 const Attendance = require('../models/Attendance');
 const Employee = require('../models/Employee');
 
@@ -33,6 +68,28 @@ exports.getAttendanceByEmployee = async (req, res, next) => {
       return res.status(404).json({ error: 'Employee not found.' });
     }
     const records = await Attendance.find({ employee: employee._id }).sort({ date: -1 });
+    res.json(records);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Filter attendance records by date (query params: startDate, endDate)
+exports.filterAttendanceByDate = async (req, res, next) => {
+  try {
+    const { employeeId } = req.params;
+    const { startDate, endDate } = req.query;
+    const employee = await Employee.findOne({ employeeId });
+    if (!employee) {
+      return res.status(404).json({ error: 'Employee not found.' });
+    }
+    let filter = { employee: employee._id };
+    if (startDate || endDate) {
+      filter.date = {};
+      if (startDate) filter.date.$gte = new Date(startDate);
+      if (endDate) filter.date.$lte = new Date(endDate);
+    }
+    const records = await Attendance.find(filter).sort({ date: -1 });
     res.json(records);
   } catch (err) {
     next(err);
