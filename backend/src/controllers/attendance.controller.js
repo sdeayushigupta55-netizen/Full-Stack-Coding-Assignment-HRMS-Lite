@@ -23,7 +23,8 @@ exports.getPresentDaysSummary = async (req, res, next) => {
       {
         $project: {
           employeeId: '$employeeInfo.employeeId',
-          name: '$employeeInfo.name',
+          name: '$employeeInfo.fullName',
+          // fullName: '$employeeInfo.fullName',÷
           presentDays: 1
         }
       }
